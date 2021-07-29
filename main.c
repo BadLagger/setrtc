@@ -4,6 +4,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <unistd.h>
+#include <errno.h>
 
 struct rtc_time {
   int tm_sec;
@@ -20,6 +21,8 @@ struct rtc_time {
 #define RTC_RD_TIME   _IOR('p', 0x09, struct rtc_time) /* Read RTC time   */
 #define RTC_SET_TIME  _IOW('p', 0x0a, struct rtc_time) /* Set RTC time    */
 
+extern int errno;
+
 static char *rtc_file = "/dev/rtc";
 
 static void print_example(const char *err_msg)
@@ -32,6 +35,7 @@ static void print_example(const char *err_msg)
 
 int main(int argn, char *argv[])
 {
+  int errnum = 0;
   char *str = 0;
   int counter = 0;
   int rtc_f = 0;
@@ -39,6 +43,7 @@ int main(int argn, char *argv[])
   struct rtc_time rtc_data;
 
 
+  printf("Call Setrtc!!\n");
   if(argn != 2) {
     print_example("wrong number of arguments");
     return 0;
@@ -74,20 +79,26 @@ int main(int argn, char *argv[])
     return 0;
   }
 
-  rtc_data.tm_year = (rtc_data.tm_year - 2000) + 100;
+  rtc_data.tm_year -= 1900;
   rtc_data.tm_mon -= 1;
-  rtc_f = open(rtc_file, O_RDONLY);
-  if(rtc_f == -1) {
-    printf("RTC %s open error\n", rtc_file);
-    return 0;
-  }
+
+  do
+  {
+    rtc_f = open(rtc_file, O_RDONLY);
+    if(rtc_f == -1) {
+      errnum = errno;
+      printf("RTC %s open error: %d - %s\n", rtc_file, errnum, strerror( errnum ) );
+    }
+  }while(rtc_f == -1);
 
   ret = ioctl(rtc_f, RTC_SET_TIME, &rtc_data);
   if(ret == -1) {
-    printf("RTC %s set time error\n", rtc_file);
-    close(rtc_f);
-    return 0;
+    errnum = errno;
+    printf("RTC %s set error: %d - %s\n", rtc_file, errnum, strerror( errnum ));
+  } else {
+    printf("RTC successfully set\n");
   }
+  
   close(rtc_f);
 
   return 0;
