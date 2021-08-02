@@ -43,7 +43,7 @@ int main(int argn, char *argv[])
   struct rtc_time rtc_data;
 
 
-  printf("Call Setrtc!!\n");
+  // printf("Call Setrtc!!\n");
   if(argn != 2) {
     print_example("wrong number of arguments");
     return 0;
@@ -91,13 +91,16 @@ int main(int argn, char *argv[])
     }
   }while(rtc_f == -1);
 
-  ret = ioctl(rtc_f, RTC_SET_TIME, &rtc_data);
-  if(ret == -1) {
-    errnum = errno;
-    printf("RTC %s set error: %d - %s\n", rtc_file, errnum, strerror( errnum ));
-  } else {
-    printf("RTC successfully set\n");
-  }
+  do
+  {
+    ret = ioctl(rtc_f, RTC_SET_TIME, &rtc_data);
+    if(ret == -1) {
+      errnum = errno;
+      printf("RTC %s set error: %d - %s\n", rtc_file, errnum, strerror( errnum ));
+    } else {
+      // printf("RTC successfully set\n");
+    }
+  }while(ret == -1);
   
   close(rtc_f);
 
